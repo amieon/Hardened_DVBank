@@ -40,13 +40,14 @@ def login():
     if user and User.query.get(user[0]).check_password(password):
         user_obj = User.query.get(user[0])
         
+        from flask import current_app
         token = jwt.encode(
             {
                 'user_id': user[0],
                 'username': username,
                 'exp': datetime.utcnow() + timedelta(days=1)
             },
-            'secret',
+            current_app.config['SECRET_KEY'],
             algorithm='HS256'
         )
         
