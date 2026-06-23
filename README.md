@@ -1,238 +1,58 @@
-# DVBank Lab: Hands-on Web Security with Python & React
-## A Practical Guide to Secure Code Review and Web Application Security
+# Hardened DVBank — 认证、授权与交易安全加固实验
 
-Welcome to DVBank Lab, an intentionally vulnerable banking application designed for learning secure code review and web application security. This project serves as both a hands-on learning environment and a comprehensive course in identifying, understanding, and fixing security vulnerabilities.
+> 基于开源教学靶场 **DVBank Lab** 进行漏洞复现与安全加固。
+> Fork 自 [mamgad/DVBLab](https://github.com/mamgad/DVBLab)。原项目说明见 [`README_DVBank_original.md`](./README_DVBank_original.md)。
 
-> Inspired by [DVWA (Damn Vulnerable Web Application)](https://github.com/digininja/DVWA), this project aims to provide a modern, full-stack vulnerable application specifically focused on banking security scenarios.
+## 项目简介
 
-## 🎯 Demo
+DVBank 是一个**故意留有安全漏洞**的迷你银行 Web 应用(React 前端 + Flask 后端 + SQLite),用于学习 Web 安全。本仓库在原项目基础上,完成了「复现漏洞 → 加固 → 回归验证」的完整安全工程流程。
 
-### Dashboard
-![Dashboard Demo](docs/images/dashboard.png)
+⚠️ **仅供本地学习使用,严禁对任何未授权系统进行测试。**
 
-### Transaction System
-![Transactions Demo](docs/images/transactions.png)
+## 技术栈
 
-### Profile Features
-![Profile Features](docs/images/profile.png)
+- 前端:React
+- 后端:Python / Flask + SQLAlchemy
+- 数据库:SQLite
+- 部署:Docker / docker-compose
 
-
-## 🎯 Educational Objectives
-
-This project helps you master:
-- Secure code review techniques
-- Vulnerability identification and exploitation
-- Security fix implementation
-- Security assessment methodologies
-- Secure coding practices
-
-## 🛠️ Technology Stack
-
-### Backend
-- Python 3.9+
-- Flask Framework
-- SQLAlchemy ORM
-- JWT Authentication
-- SQLite Database
-
-### Frontend
-- React 18
-- TailwindCSS
-- Lucide Icons
-- Modern UI/UX
-
-### Development & Deployment
-- Docker & Docker Compose
-- Git Version Control
-- Development Tools Integration
-
-## 📚 Module Index
-
-Detailed course materials can be found in the following files:
-
-| Module | Description | Link |
-|--------|-------------|------|
-| 0. Methodology | Secure Code Review Methodology | [📘 Module 0](course/modules/00_methodology.md) |
-| 1. Application Reconnaissance | Application Reconnaissance & Attack Surface Mapping | [📘 Module 1](course/modules/01_recon_and_mapping.md) |
-| 2. Software Composition Analysis | Dependency Security Analysis | [📘 Module 2](course/modules/02_sca.md) |
-| 3. Authentication & Authorization | Authentication & Authorization Vulnerabilities | [📘 Module 3](course/modules/03_auth_and_authz.md) |
-| 4. SQL Injection | SQL Injection Vulnerabilities | [📘 Module 4](course/modules/04_sql_injection.md) |
-| 5. Input Validation | Input Validation Vulnerabilities | [📘 Module 5](course/modules/05_input_validation.md) |
-| 6. API Security | API Security Best Practices | [📘 Module 6](course/modules/06_api_security.md) |
-| 7. Secure Coding | Secure Coding Practices | [📘 Module 7](course/modules/07_secure_coding.md) |
-| 8. Static Analysis | Automated Static Analysis with Semgrep | [📘 Module 8](course/modules/08_static_analysis.md) |
-
-
-Each module contains:
-- Theoretical background
-- Vulnerable code examples
-- Exploitation techniques
-- Prevention methods
-- Hands-on exercises
-- Additional resources
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.9 or higher
-- Node.js 16 or higher
-- Docker and Docker Compose (optional)
-- Git
-
-### Docker Setup (Recommended)
+## 快速开始
 
 ```bash
-# Clone repository
-git clone https://github.com/mamgad/DVBLab.git
-cd DVBLab
+# 克隆
+git clone https://github.com/amieon/Hardened_DVBank.git
+cd Hardened_DVBank
 
-# Launch application
-docker-compose up --build
+# 启动（首次构建较慢）
+./run.sh
+
+# 访问
+# 前端: http://localhost:3000
+# 后端 API: http://localhost:5000
 ```
 
-### Manual Setup
+测试账号:`alice` / `password123`(其余 bob、charlie… 同口令)。
 
-#### Backend (Python/Flask)
-```bash
-# Clone repository
-git clone https://github.com/mamgad/DVBLab.git
-cd DVBLab
+> 注:加固后口令存储已改为带盐哈希,如遇旧数据无法登录,删除 `backend/vulnerable_bank.db*` 后重启,由程序自动重建种子数据。
 
-# Backend setup
-cd backend
-python -m venv venv
+## 完成的安全加固
 
-# Activate virtual environment
-source venv/bin/activate  # Linux/macOS
-.\venv\Scripts\activate   # Windows
+| 编号 | 漏洞 | 加固措施 |
+|------|------|----------|
+| F-1 | 登录接口 SQL 注入(字符串拼接) | 改用参数化查询 |
+| F-2 | 口令明文/弱哈希(无盐 MD5) | 改用 Werkzeug PBKDF2 带盐哈希 |
+| F-3 | 交易列表对象级越权(IDOR) | 强制以当前登录用户查询,并参数化 |
+| F-4 | 转账金额未校验(负数/超精度) | 校验正数、精度、余额,并事务化 |
+| F-5 | JWT 密钥硬编码 | 改为从环境变量读取强随机密钥 |
+| F-6 | 管理员接口越权 + 信息泄露 | 增加角色校验,移除响应中的口令哈希 |
 
-# Install dependencies
-pip install -r requirements.txt
+详细的漏洞复现、修复前后对比与回归验证见实验报告。
 
-# Start server
-python app.py
-```
+## 致谢与许可
 
-#### Frontend (React)
-```bash
-# In a new terminal
-cd frontend
-npm install
-npm start
-```
+- 原始靶场:[mamgad/DVBLab](https://github.com/mamgad/DVBLab)
+- 本仓库为课程学习用途,遵循原项目许可。
 
-### Access the Application
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+## 免责声明
 
-### Test Credentials
-- Username: alice, Password: password123
-- Username: bob, Password: password123
-
-## 🏗️ Project Structure
-```
-vulnerable-bank/
-├── backend/                  # Flask backend
-│   ├── routes/              # API endpoints
-│   │   ├── auth_routes.py   # Authentication
-│   │   └── transaction_routes.py  # Transactions
-│   ├── app.py              # Main application
-│   ├── models.py           # Database models
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   └── App.js        # Main app component
-│   └── package.json      # Node dependencies
-├── course/               # Educational content
-│   ├── modules/         # Course modules
-│   └── exercises/       # Practice materials
-└── docker-compose.yml   # Docker configuration
-```
-
-## 🔒 Security Features
-
-### Authentication System
-- JWT-based authentication
-- Password hashing
-- Session management
-
-### Transaction System
-- Money transfers
-- Balance tracking
-- Transaction history
-
-### User Management
-- User registration
-- Profile management
-- Role-based access
-
-## 🎯 Learning Objectives
-
-### Vulnerability Categories
-1. Authentication Bypass
-2. Authorization Flaws
-3. Input Validation
-4. Business Logic Flaws
-5. API Security Issues
-
-### Security Skills
-1. Code Review Techniques
-2. Vulnerability Assessment
-3. Security Testing
-4. Fix Implementation
-
-## ⚠️ Security Notice
-
-This application contains **INTENTIONAL** security vulnerabilities for educational purposes:
-1. SQL Injection vulnerabilities
-2. Insecure JWT implementation
-3. Missing input validation
-4. IDOR vulnerabilities
-5. Race conditions
-6. Weak password policies
-
-**DO NOT:**
-- Deploy to production
-- Use real credentials
-- Use production data
-- Host publicly
-
-## 🤝 Contributing
-
-We welcome contributions! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-4. Follow security guidelines
-
-## 📚 Additional Resources
-
-### Documentation
-- [Course Modules](./course/README.md)
-- [Installation Guide](#-quick-start)
-- [Known Vulnerabilities](./docs/Vulnerabilities.md) - Detailed list of intentional security issues
-
-### External Resources
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Flask Security](https://flask.palletsprojects.com/en/stable/web-security/)
-
-
-## 🙏 Acknowledgments
-- OWASP Foundation
-- [DVWA](https://github.com/digininja/DVWA) - The original inspiration for this project
-- Security research community
-- Open source contributors
-
-## ⚠️ Disclaimer
-This application contains intentional security vulnerabilities for educational purposes. The creators are not responsible for any misuse or damage caused by this application. Use at your own risk and only in a controlled, isolated environment. 
-
----
-
-## Legal Notice
-
-© 2024 All Rights Reserved.
-
-This educational material is provided for learning purposes only. The code examples and vulnerabilities demonstrated are for educational use in a controlled environment. The authors and contributors are not responsible for any misuse of the information provided.
-
-_Note: All code examples contain intentional vulnerabilities for educational purposes. Do not use in production environments._ 
+本项目仅用于安全教育与本地实验。请勿将任何技术用于未经授权的系统;发现真实系统漏洞应走负责任披露流程。

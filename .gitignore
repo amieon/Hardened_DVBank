@@ -49,3 +49,8 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db 
+
+#db
+*.db
+*.db-wal
+*.db-shm
