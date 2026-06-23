@@ -280,6 +280,8 @@ def create_audit_entry(current_user):
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @token_required
 def list_all_users(current_user):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Admin access required'}), 403
     users = User.query.all()
     return jsonify([{
         'id': u.id,
@@ -287,7 +289,6 @@ def list_all_users(current_user):
         'email': u.email,
         'balance': float(u.balance),
         'role': u.role,
-        'password_hash': u.password_hash,
         'profile': u.get_profile()
     } for u in users])
 
