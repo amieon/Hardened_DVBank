@@ -11,35 +11,45 @@ transaction_bp = Blueprint('transaction', __name__)
 def transfer(current_user):
     data = request.get_json()
     to_user_id = data.get('to_user_id')
-    amount = Decimal(str(data.get('amount', 0)))
-    description = data.get('description', '')
-    
+
+    # 1. 金额合法性校验：必须是正数、最多两位小数
+    try:
+        amount = Decimal(str(data.get('amount', 0))).quantize(Decimal('0.01'))
+    except Exception:
+        return jsonify({'error': 'Invalid amount'}), 400
+    if amount <= 0:
+        return jsonify({'error': 'Amount must be positive'}), 400
+
+    # 2. 收款方校验：必须存在，且不能转给自己
     receiver = User.query.get(to_user_id)
-    
     if not receiver:
         return jsonify({'error': 'Receiver not found'}), 404
-    
-    transaction = Transaction(
-        sender_id=current_user.id,
-        receiver_id=receiver.id,
-        amount=amount,
-        description=description,
-        status='completed',
-        completed_at=datetime.utcnow()
-    )
+    if receiver.id == current_user.id:
+        return jsonify({'error': 'Cannot transfer to self'}), 400
+
+    # 3. 余额校验
     if current_user.balance < amount:
-        return jsonify({'error': 'Insufficient balance'}), 400  
-    
-    current_user.balance -= amount
-    receiver.balance += amount
-    
-    db.session.add(transaction)
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Transfer successful',
-        'transaction': transaction.to_dict()
-    })
+        return jsonify({'error': 'Insufficient balance'}), 400
+
+    # 4. 扣款、入账、写记录置于同一事务，失败回滚
+    try:
+        current_user.balance -= amount
+        receiver.balance += amount
+        transaction = Transaction(
+            sender_id=current_user.id,
+            receiver_id=receiver.id,
+            amount=amount,
+            description=data.get('description', ''),
+            status='completed',
+            completed_at=datetime.utcnow()
+        )
+        db.session.add(transaction)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'Transfer failed'}), 500
+
+    return jsonify({'message': 'Transfer successful', 'transaction': transaction.to_dict()})
 
 @transaction_bp.route('/api/transactions', methods=['GET'])
 @token_required
