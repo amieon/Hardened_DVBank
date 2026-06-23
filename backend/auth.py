@@ -20,7 +20,8 @@ def token_required(f):
             return jsonify({'error': 'Token is missing'}), 401
 
         try:
-            data = jwt.decode(token, 'secret', algorithms=['HS256'])
+            from flask import current_app
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = User.query.get(data['user_id'])
             if not current_user:
                 return jsonify({'error': 'Invalid token'}), 401

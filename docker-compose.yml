@@ -12,7 +12,7 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-      - SECRET_KEY=supersecret
+      - SECRET_KEY=k7Qx29mPv4Lw8RtZa3Nf6Bc1Ej5Hy0Ud
     restart: always
 
   frontend:
