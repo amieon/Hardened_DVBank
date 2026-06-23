@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 import hashlib
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 from datetime import datetime
 from decimal import Decimal
@@ -10,7 +11,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=True)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     balance = db.Column(db.Numeric(10, 2), default=0.00)
     profile = db.Column(db.Text, nullable=True)
     role = db.Column(db.String(20), default='user')
@@ -20,11 +21,12 @@ class User(db.Model):
     sent_transactions = db.relationship('Transaction', foreign_keys='Transaction.sender_id', backref='sender', lazy=True)
     received_transactions = db.relationship('Transaction', foreign_keys='Transaction.receiver_id', backref='receiver', lazy=True)
 
+
     def set_password(self, password):
-        self.password_hash = hashlib.md5(password.encode()).hexdigest()
+            self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return self.password_hash == hashlib.md5(password.encode()).hexdigest()
+        return check_password_hash(self.password_hash, password)
 
     def get_profile(self):
         return json.loads(self.profile) if self.profile else {}
