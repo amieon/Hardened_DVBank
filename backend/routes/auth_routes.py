@@ -33,8 +33,9 @@ def login():
     username = data.get('username')
     password = data.get('password')
     
-    query = f"SELECT * FROM user WHERE username = '{username}'"
-    user = db.session.execute(query).fetchone()
+    from sqlalchemy import text
+    query = text("SELECT * FROM user WHERE username = :username")
+    user = db.session.execute(query, {"username": username}).fetchone()
     
     if user and User.query.get(user[0]).check_password(password):
         user_obj = User.query.get(user[0])
