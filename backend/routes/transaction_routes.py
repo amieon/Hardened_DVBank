@@ -44,10 +44,11 @@ def transfer(current_user):
 @transaction_bp.route('/api/transactions', methods=['GET'])
 @token_required
 def get_transactions(current_user):
-    user_id = request.args.get('user_id', current_user.id)
-    
-    query = f'SELECT * FROM "Transaction" WHERE sender_id = {user_id} OR receiver_id = {user_id} ORDER BY created_at DESC'
-    result = db.session.execute(query)
+    user_id = current_user.id
+
+    from sqlalchemy import text
+    query = text('SELECT * FROM "transaction" WHERE sender_id = :uid OR receiver_id = :uid ORDER BY created_at DESC')
+    result = db.session.execute(query, {"uid": user_id})
     transactions = result.fetchall()
     
     return jsonify([{
